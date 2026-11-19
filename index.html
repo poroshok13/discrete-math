@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Задачник — Discrete Math</title>
+<link rel="stylesheet" href="style.css">
+<script>window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$']]},svg:{fontCache:'local'},options:{enableMenu:false},startup:{typeset:false}};</script>
+<script defer src="mathjax.js"></script><script defer src="data.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<div class="shell">
+ <header class="masthead"><button class="brand" id="brand" title="К выбору теста"><span class="brand-symbol">∑</span><span>Задачник<small>DISCRETE MATHEMATICS</small></span></button><div class="header-right"><span class="offline"><i></i> Прогресс на этом устройстве</span><button class="icon-button" id="help" aria-label="Как пользоваться">?</button></div></header>
+ <div id="storage-warning" class="storage-warning" hidden>Браузер запретил сохранение. Прогресс работает в этом окне, но может потеряться при закрытии.</div>
+ <main id="home">
+  <div class="home-intro"><p class="eyebrow">ТВОЯ ПОДГОТОВКА К ЭКЗАМЕНУ</p><h1>Разберись. Реши.<br><span>Проверь себя.</span></h1><p class="intro-copy">От простого остатка до сложной комбинаторики.<br>Выбери вариант и двигайся в своём темпе.</p></div>
+  <div class="test-cards">
+   <button class="test-card sample-card" data-open="sample"><span class="card-top"><span class="badge">ОТ ПРЕПОДАВАТЕЛЯ</span><span class="card-arrow">↗</span></span><h2>Sample Final Test</h2><p>Полный банк из Pre-Final Fall 2020.<br>Перевод, проверенные ответы и разбор.</p><div class="card-stats"><span><b>131</b> задача</span><span><b>10</b> тем</span></div><div class="card-progress"><span id="sample-count">Решено 0 из 131</span><div class="track"><i id="sample-bar"></i></div></div><span class="card-cta" id="sample-cta">Начать подготовку <span>→</span></span></button>
+   <button class="test-card final-card" data-open="final"><span class="card-top"><span class="badge">АВТОРСКИЙ ВАРИАНТ · СЛОЖНЕЕ</span><span class="card-arrow">↗</span></span><h2>Final Test</h2><p>Новые условия и дополнительные шаги.<br>20 вопросов по темам образца.</p><div class="card-stats"><span><b>20</b> задач</span><span><b>≈20%</b> сложнее</span></div><div class="card-progress"><span id="final-count">Решено 0 из 20</span><div class="track"><i id="final-bar"></i></div></div><span class="card-cta" id="final-cta">Пройти тренировку <span>→</span></span></button>
+  </div>
+  <div class="home-note"><span>01 → 02</span><p>Сначала закрепи методы на образце, затем переходи к Final Test. Уровень «≈20%» — учебный ориентир, а не точное предсказание экзамена. Решение открывается после правильного ответа.</p></div>
+ </main>
+ <main id="practice" hidden>
+  <div class="workspace-top"><button id="back-home" class="text-button">← Выбор теста</button><span id="mode-label"></span><button id="reset" class="text-button subtle">Сбросить этот тест</button></div>
+  <div class="work-heading"><div><p class="eyebrow" id="question-counter"></p><h1 id="topic-title"></h1></div><div class="progress-info"><strong id="progress-count"></strong><span>решено</span><div class="track"><i id="progress-bar"></i></div></div></div>
+  <div class="toolbar"><label>Тема <select id="topic-filter" aria-label="Фильтр по теме"></select></label><label>Задача <select id="question-select" aria-label="Перейти к задаче"></select></label><label class="only-unsolved"><input type="checkbox" id="only-unsolved"> Только нерешённые</label></div>
+  <section class="question-panel" aria-labelledby="question-label"><div class="panel-label"><span id="question-label">УСЛОВИЕ</span><span id="question-id"></span></div><div id="question-text"></div></section>
+  <div class="answer-layout">
+   <section class="answers-panel" aria-labelledby="answers-label"><div class="panel-label" id="answers-label">ВАРИАНТЫ ОТВЕТА</div><div id="answer-options" role="radiogroup" aria-label="Варианты ответа"></div><div id="feedback" role="status" aria-live="polite"></div></section>
+   <section class="solution-panel" aria-labelledby="solution-label"><div class="panel-label"><span id="solution-label">РАЗБОР РЕШЕНИЯ</span><span id="solution-state">ПОСЛЕ ВЕРНОГО ОТВЕТА</span></div><div id="solution-content"></div></section>
+  </div>
+  <nav class="bottom-nav" aria-label="Навигация по задачам"><button id="previous" class="secondary">← Предыдущая</button><span id="nav-position"></span><div><button id="check" class="primary">Проверить ответ</button><button id="next" class="secondary">Следующая →</button></div></nav>
+  <div class="completion" id="completion" hidden><strong>Все задачи этого теста решены.</strong><span id="completion-detail"></span><button id="completion-home" class="secondary">К выбору теста</button></div>
+  <p class="source" id="source"></p>
+ </main>
+ <footer><span>УЧИСЬ ПОНИМАТЬ, А НЕ ЗАПОМИНАТЬ БУКВУ</span><span>Прогресс сохраняется на этом компьютере</span></footer>
+</div>
+<dialog id="help-dialog"><div class="dialog-head"><h2>Как пользоваться</h2><button id="close-help" class="icon-button" aria-label="Закрыть">×</button></div><p>Выбери вариант ответа и нажми <b>«Проверить ответ»</b>. Если ответ неверный, попробуй ещё раз. После правильного ответа справа откроются расчёт, правило и ссылка на раздел курса.</p><p>Переходы не стирают ответы. Прогресс у двух тестов сохраняется отдельно в этом браузере. «Сбросить этот тест» очищает только выбранный тест после подтверждения.</p><p>Клавиши <b>A–E</b> или <b>1–5</b> выбирают ответ, <b>Enter</b> проверяет, <b>← / →</b> меняют задачу. В выпадающем списке работают обычные клавиши управления.</p><p>В Sample 131 задача. В Final 20 новых задач, ориентировочно сложнее образца. Это тренажёр с обратной связью, без официального таймера или оценок.</p><p>В исходном ключе исправлен Type 10 №18. Неоднозначные формулировки уточнены и отмечены в решениях. Ранние лекции 1–5 отсутствуют в папке, поэтому соответствующая теория обозначена как дополнительная.</p><a href="Полный разбор.md" download>Сохранить полный текстовый разбор</a></dialog>
+<dialog id="reset-dialog"><h2>Начать этот тест заново?</h2><p>Выбранные ответы, попытки и решённые задачи этого теста будут очищены. Второй тест останется без изменений.</p><div class="dialog-actions"><button id="cancel-reset" class="secondary">Отмена</button><button id="confirm-reset" class="primary">Сбросить прогресс</button></div></dialog>
+</body></html>
