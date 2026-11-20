@@ -14,17 +14,18 @@ const list=()=>TASKS[mode];
 const item=()=>list()[current];
 function progress(m){return TASKS[m].filter(q=>state[m].answers[q.id]?.solved).length;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(_){$('storage-warning').hidden=false;}}
-function math(){
+function math(target='practice'){
  mathQueue=mathQueue.catch(()=>{}).then(async()=>{
   if(!window.MathJax?.startup)return;
   await MathJax.startup.promise;
-  await MathJax.typesetPromise([$ ('practice')]);
+  await MathJax.typesetPromise([$(target)]);
  }).catch(()=>{ $('source').textContent+=' Формула не отрисовалась: доступна её текстовая запись.'; });
 }
-function clearMath(){if(window.MathJax?.typesetClear)MathJax.typesetClear([$ ('practice')]);}
+function clearMath(target='practice'){if(window.MathJax?.typesetClear)MathJax.typesetClear([$(target)]);}
+function section(name){for(const id of ['home','practice','reviews'])$(id).hidden=id!==name;for(const id of ['tab-tests','tab-reviews'])$(id).removeAttribute('aria-current');$(name==='reviews'?'tab-reviews':'tab-tests').setAttribute('aria-current','page');}
 function visible(){return list().map((q,i)=>({q,i})).filter(({q})=>(filter==='all'||q.type===Number(filter))&&(!only||!state[mode].answers[q.id]?.solved)).map(o=>o.i);}
 function home(){
- $('practice').hidden=true;$('home').hidden=false;
+ section('home');
  for(const m of ['sample','final']){
   const n=progress(m);$(m+'-count').textContent=`Решено ${n} из ${TASKS[m].length}`;$(m+'-bar').style.width=n/TASKS[m].length*100+'%';
   $(m+'-cta').innerHTML=(n===TASKS[m].length?'Повторить и посмотреть решения':Object.keys(state[m].answers).length?'Продолжить':'Начать подготовку')+' <span>→</span>';
@@ -37,7 +38,7 @@ function open(m){
  if(current<0||current>=list().length)current=0;
  $('topic-filter').innerHTML='<option value="all">Все темы</option>'+TASKS.topics.map((t,i)=>`<option value="${i+1}">${i+1}. ${escape(t)}</option>`).join('');
  const vis=visible();if(!vis.includes(current)&&vis.length)current=vis[0];if(!vis.length){only=false;filter='all';}
- $('home').hidden=true;$('practice').hidden=false;render();window.scrollTo(0,0);
+ section('practice');render();window.scrollTo(0,0);
 }
 function render(message='',messageType=''){
  clearMath();const q=item(),a=state[mode].answers[q.id]||{selected:null,solved:false,attempts:0,wrong:[]};
@@ -52,7 +53,7 @@ function render(message='',messageType=''){
  $('answer-options').innerHTML=q.options.map((o,i)=>`<button type="button" role="radio" aria-checked="${a.selected===i}" aria-label="${String.fromCharCode(65+i)}: ${escape(o)}" class="option ${a.selected===i?'selected ':''}${a.solved&&i===q.answer?'correct ':''}${!a.solved&&(a.wrong||[]).includes(i)?'wrong':''}" data-answer="${i}" ${a.solved?'disabled':''}><span class="letter">${a.solved&&i===q.answer?'✓':String.fromCharCode(65+i)}</span><span class="option-text">${escape(o)}</span></button>`).join('');
  $('feedback').className='feedback '+(messageType||(a.solved?'success':''));$('feedback').textContent=message||(a.solved?'Верно. Решение открыто.':a.attempts?'Была ошибка. Выбери другой ответ и попробуй снова.':'Выбери один вариант ответа.');
  $('solution-state').textContent=a.solved?'РЕШЕНИЕ ОТКРЫТО':'ПОСЛЕ ВЕРНОГО ОТВЕТА';
- $('solution-content').innerHTML=a.solved?`<div class="solution-step">${rich(q.solution)}</div><div class="rule"><h3>КАКОЙ МЕТОД ИСПОЛЬЗОВАТЬ</h3>${rich(q.rule)}</div>${q.note?`<div class="note">${rich(q.note)}</div>`:''}`:'<div class="locked"><div class="lock-icon" aria-hidden="true">◇</div><h3>Сначала попробуй сам</h3><p>Выбери ответ слева и нажми «Проверить». После верного ответа здесь появится пошаговый разбор.</p></div>';
+ $('solution-content').innerHTML=a.solved?`<div class="solution-step">${rich(LESSONS.get(q).solution)}</div><div class="rule"><h3>КАКОЙ МЕТОД ИСПОЛЬЗОВАТЬ</h3>${rich(q.rule)}</div>${q.note?`<div class="note">${rich(q.note)}</div>`:''}`:'<div class="locked"><div class="lock-icon" aria-hidden="true">◇</div><h3>Сначала попробуй сам</h3><p>Выбери ответ слева и нажми «Проверить». После верного ответа здесь появится пошаговый разбор.</p></div>';
  $('check').disabled=a.solved;$('check').textContent=a.solved?'✓ Ответ проверен':'Проверить ответ';
  const pos=nav.indexOf(current);$('previous').disabled=pos<=0;$('next').disabled=pos>=nav.length-1;$('nav-position').textContent=`${pos+1} из ${nav.length}${filter!=='all'?' в теме':''}`;
  $('source').textContent=q.originalQuestion+' · '+q.source;
@@ -85,5 +86,40 @@ document.addEventListener('keydown',e=>{
  else if(e.key==='ArrowLeft'){e.preventDefault();navigate(-1);}else if(e.key==='ArrowRight'){e.preventDefault();navigate(1);}
  else {const k=e.key.toUpperCase(),i=/^[A-E]$/.test(k)?k.charCodeAt(0)-65:/^[1-5]$/.test(k)?Number(k)-1:-1;if(i>=0){e.preventDefault();choose(i);}}
 });
+// The reading view has its own navigation and never writes test answers.
+let reviewMode='sample',reviewId='T1.1',route='all';
+$('review-topic').innerHTML='<option value="all">Все темы</option>'+TASKS.topics.map((t,i)=>`<option value="${i+1}">${i+1}. ${escape(t)}</option>`).join('');
+function reviewItems(){
+ const topic=$('review-topic').value,diff=$('review-difficulty').value,query=$('review-search').value.trim().toLowerCase();
+ return TASKS[reviewMode].filter(q=>{
+  const lesson=LESSONS.get(q),search=[q.id,q.question,TASKS.topics[q.type-1]].join(' ').toLowerCase();
+  return (topic==='all'||q.type===Number(topic))&&(diff==='all'||lesson.difficulty===diff)&&(!query||search.includes(query))&&(route==='all'||(route==='base'?lesson.difficulty==='easy':lesson.difficulty!=='easy'));
+ });
+}
+function renderReviews(){
+ const rows=reviewItems();if(!rows.some(q=>q.id===reviewId))reviewId=rows[0]?.id||'';
+ $('review-count').textContent=`Найдено: ${rows.length}`;
+ $('review-list').innerHTML=rows.length?rows.map(q=>{const l=LESSONS.get(q);return `<button data-review-id="${q.id}" ${q.id===reviewId?'aria-current="true"':''}><span class="review-item-top"><b>${q.id}</b><span class="difficulty ${l.difficulty}">${l.label}</span></span><span>${escape(TASKS.topics[q.type-1])}</span></button>`;}).join(''):'<p class="empty-review">Ничего не найдено. Измени тему, маршрут или поисковый запрос.</p>';
+ clearMath('review-detail');const q=rows.find(q=>q.id===reviewId);
+ if(!q){$('review-detail').innerHTML='<div class="empty-detail"><h2>Подходящих задач нет</h2><p>Попробуй другой номер или сбрось фильтры кнопкой «Все задачи».</p></div>';return;}
+ const l=LESSONS.get(q);
+ $('review-detail').innerHTML=`<div class="review-article-head"><div><p class="eyebrow">${reviewMode==='sample'?'SAMPLE FINAL TEST':'FINAL TEST'} · ${q.id}</p><h2>${escape(TASKS.topics[q.type-1])}</h2></div><span class="difficulty ${l.difficulty}">${l.label}</span></div><section class="review-question"><h3>Условие</h3>${rich(q.question)}</section><section class="review-answer"><h3>Правильный ответ · ${String.fromCharCode(65+q.answer)}</h3>${rich(q.options[q.answer])}</section><section class="review-step"><h3>1. С чего начать</h3>${rich(l.start)}</section><section class="review-step"><h3>2. Решение</h3>${rich(l.solution)}</section><section class="review-pitfall"><h3>3. Что проверить</h3>${rich(l.pitfall)}</section>${q.note?`<div class="note">${rich(q.note)}</div>`:''}<details class="review-theory"><summary>Формула и правило по теме</summary>${rich(q.rule)}</details><p class="source">${escape(q.source)}</p><div class="review-bottom"><button class="secondary" id="review-prev" ${rows[0].id===q.id?'disabled':''}>Предыдущий разбор</button><button class="primary" id="review-practice">Решить в тесте</button><button class="secondary" id="review-next" ${rows.at(-1).id===q.id?'disabled':''}>Следующий разбор</button></div>`;
+ $('review-practice').onclick=()=>{open(reviewMode);filter='all';only=false;current=list().findIndex(item=>item.id===q.id);render();window.scrollTo(0,0);};
+ function move(delta){reviewId=rows[rows.findIndex(x=>x.id===q.id)+delta].id;renderReviews();$('review-detail').scrollIntoView({block:'start'});}
+ $('review-prev').onclick=()=>move(-1);$('review-next').onclick=()=>move(1);
+ math('review-detail');
+}
+function showReviews(){section('reviews');$('review-mode').value=reviewMode;renderReviews();document.title='Разборы задач — Задачник';window.scrollTo(0,0);}
+$('tab-tests').addEventListener('click',home);$('tab-reviews').addEventListener('click',showReviews);
+$('review-mode').addEventListener('change',()=>{reviewMode=$('review-mode').value;renderReviews();});
+for(const id of ['review-topic','review-difficulty'])$(id).addEventListener('change',renderReviews);
+$('review-search').addEventListener('input',renderReviews);
+$('review-list').addEventListener('click',event=>{const b=event.target.closest('[data-review-id]');if(b){reviewId=b.dataset.reviewId;renderReviews();$('review-detail').scrollIntoView({block:'start'});}});
+document.querySelectorAll('[data-route]').forEach(button=>button.addEventListener('click',()=>{
+ route=button.dataset.route;$('review-topic').value='all';$('review-difficulty').value='all';$('review-search').value='';
+ document.querySelectorAll('[data-route]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+ $('route-description').textContent=route==='base'?'Первый проход: деление, НОД, простые выборы, прогрессии, гарантии и стандартные формулы. Метки сложности — оценка учебного материала.':route==='extend'?'Следующий проход: большие степени, целочисленные уравнения, сравнения, рекурсии и включения-исключения. Самые трудные пересечения оставь напоследок.':'';
+ renderReviews();
+}));
 home();
 })();
